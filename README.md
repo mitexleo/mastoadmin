@@ -1,0 +1,2 @@
+# mastoadmin
+Mastodon cleanup script
