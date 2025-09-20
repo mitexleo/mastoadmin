@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Mastodon Docker Cleanup Script
+# Mastodon Docker Cleanup Script (linuxserver.io Image)
 # Inspired by: https://codeberg.org/Fedimins/mastodon-maintenance-tasks
 # Licensed under CC BY-SA 4.0
 
@@ -23,7 +23,7 @@ MEDIA_USAGE_ENABLED=false
 # Function: help
 # Purpose: Display usage instructions
 function help() {
-  echo "Mastodon Docker Cleanup Script"
+  echo "Mastodon Docker Cleanup Script (linuxserver.io Image)"
   echo "Usage: $0 [options]"
   echo "Options:"
   echo "  --days <n>           Set age threshold for cleanups (default: $DAYS)"
@@ -53,64 +53,29 @@ function check_command() {
 # Purpose: Check all required dependencies
 function check_dependency() {
   for cmd in "${DEPENDENCIES[@]}"; do
-
-
     check_command "$cmd"
-
-
-
   done
 }
 
 # Function: check_pid
-
 # Purpose: Prevent concurrent script runs
 function check_pid() {
   if [ -e "$PID_FILE" ]; then
-
-
-
     STORED_PID=$(cat "$PID_FILE")
-
-
-
-
     if ps -p "$STORED_PID" >/dev/null; then
-
-
-
       echo "Error: Script is already running (PID: $STORED_PID)."
-
-
-
       exit 1
     else
       echo "No running process for PID: $STORED_PID. Deleting $PID_FILE."
-
-
-
-
       rm -f "$PID_FILE"
-
-
-
     fi
-
   fi
-
 }
 
 # Function: create_pid
-
 # Purpose: Create PID file for this run
-
 function create_pid() {
   if ! echo "$$" >"$PID_FILE"; then
-
-
-
-
-
     echo "Error: Could not create PID file."
     exit 1
   fi
@@ -146,9 +111,9 @@ function time_end() {
 }
 
 # Function: run_tootctl
-# Purpose: Execute tootctl command in Docker container
+# Purpose: Execute tootctl command in Docker container (linuxserver.io image)
 function run_tootctl() {
-  docker exec "$CONTAINER" bundle exec tootctl "$@"
+  docker exec "$CONTAINER" /tootctl "$@"
 }
 
 # Function: accounts_prune
@@ -199,8 +164,8 @@ function cache_clear() {
 function media_usage() {
   echo "Calculating media disk usage..."
   run_tootctl media usage
-  echo "Disk usage in /live/public/system:"
-  docker exec "$CONTAINER" df -h /live/public/system
+  echo "Disk usage in /config (local storage):"
+  docker exec "$CONTAINER" df -h /config
 }
 
 # Function: script_cleanup
@@ -251,17 +216,14 @@ while [ $# -gt 0 ]; do
       shift
       ;;
     --previewcardsremove)
-
       PREVIEW_CARDS_REMOVE_ENABLED=true
       shift
       ;;
     --cacheclear)
-
       CACHE_CLEAR_ENABLED=true
       shift
       ;;
     --mediausage)
-
       MEDIA_USAGE_ENABLED=true
       shift
       ;;
@@ -271,28 +233,18 @@ while [ $# -gt 0 ]; do
       ;;
     *)
       echo "Unknown option: $1"
-
-
-
       help
       exit 1
       ;;
   esac
-
 done
 
 # Validate dependencies and container
 check_dependency
 if ! docker ps --format "table {{.Names}}" | grep -q "^${CONTAINER}$"; then
-
-
   echo "Error: Container '$CONTAINER' is not running."
-
-
-
   exit 1
 fi
-
 
 # Prevent concurrent runs
 check_pid
@@ -301,190 +253,18 @@ create_pid
 # Enable logging if specified
 [ "$LOGGING_ENABLED" = true ] && logging
 
-
-
-
-
 # Track execution time
 time_start
 
 # Execute enabled cleanup tasks
 [ "$ACCOUNTS_PRUNE_ENABLED" = true ] && accounts_prune
-
-
-
-
-
-
-
-
 [ "$STATUSES_REMOVE_ENABLED" = true ] && statuses_remove
-
-
-
-
-
-
-
-
-
-
-
-
-
 [ "$MEDIA_REMOVE_ENABLED" = true ] && media_remove
-
-
-
-
-
-
-
-
-
-
-
-
-
 [ "$MEDIA_REMOVE_ORPHAN_ENABLED" = true ] && media_remove_orphans
-
-
-
-
-
-
-
-
-
-
-
-
 [ "$PREVIEW_CARDS_REMOVE_ENABLED" = true ] && preview_cards_remove
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 [ "$CACHE_CLEAR_ENABLED" = true ] && cache_clear
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 [ "$MEDIA_USAGE_ENABLED" = true ] && media_usage
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # Finalize
 time_end
 trap 'script_cleanup' EXIT
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
